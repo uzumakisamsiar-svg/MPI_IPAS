@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI IPAS SDLB - Mengenal Tumbuhan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif; /* Font bulat dan ramah anak */
+            background-color: #f0fdf4; /* Hijau sangat muda */
+            user-select: none; /* Mencegah teks tersorot secara tidak sengaja */
+            -webkit-user-select: none;
+            overflow: hidden; /* Mencegah scroll, menjaga fokus anak */
+        }
+
+        /* Motif Dayak Sederhana untuk dekorasi atas/bawah */
+        .motif-dayak {
+            background-color: #b45309;
+            background-image: repeating-linear-gradient(45deg, #b45309 25%, transparent 25%, transparent 75%, #b45309 75%, #b45309), repeating-linear-gradient(45deg, #b45309 25%, #92400e 25%, #92400e 75%, #b45309 75%, #b45309);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+            height: 15px;
+            width: 100%;
+        }
+
+        /* Animasi */
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        .btn-pulse {
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: pop 0.4s ease-out forwards;
+        }
+
+        /* Transisi Halaman */
+        .screen {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            flex-direction: column;
+        }
+        .screen.active {
+            display: flex;
+            animation: pop 0.5s ease-in-out;
+        }
+
+        /* Area Game Pohon */
+        .tree-container {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            margin: 0 auto;
+        }
+        .tree-part {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .tree-part:hover { transform: scale(1.1); }
+        .tree-part:active { transform: scale(0.95); }
+
+        /* Background Kustom untuk Layar Utama */
+        #screen-title {
+            background-color: #f0fdf4; /* Warna cadangan jika gambar belum dimuat */
+            background-image: url('./asset/bg.png') !important;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* Menambahkan efek bayangan putih pada teks agar tetap terbaca jika background ramai/gelap */
+        .text-glow {
+            text-shadow: 0px 0px 15px rgba(255, 255, 255, 1), 0px 0px 10px rgba(255, 255, 255, 0.8);
+        }
+
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- AUDIO ELEMENT UNTUK SFX SEDERHANA -->
+    <audio id="sfx-yay" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="sfx-click" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <audio id="sfx-wrong" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+
+    <!-- ==================== SCREEN 1: TITLE ==================== -->
+    <div id="screen-title" class="screen active">
+        <div class="motif-dayak"></div>
+        <div class="flex-1 flex flex-col items-center justify-center p-4 text-center">
+            
+            <div class="mb-8 relative">
+                <!-- Maskot Tingang -->
+                <div class="text-8xl animate-bounce-slow">🦜</div>
+                <div class="bg-white/90 backdrop-blur-sm border-4 border-amber-500 p-4 rounded-3xl rounded-tl-none absolute -top-4 left-24 shadow-xl w-64 text-glow">
+                    <p class="text-xl font-bold text-amber-700">Halo! Aku Tingang!</p>
+                    <p class="text-lg">Ayo belajar tumbuhan bersamaku di Kapuas!</p>
+                </div>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl font-bold text-green-800 mb-12 drop-shadow-md text-glow bg-white/70 px-8 py-4 rounded-3xl inline-block">
+                AYO MENGENAL TUMBUHAN!
+            </h1>
+
+            <button onclick="startGame()" class="btn-pulse bg-green-500 hover:bg-green-600 text-white text-4xl font-bold py-6 px-16 rounded-full shadow-2xl border-b-8 border-green-700 active:border-b-0 active:translate-y-2 transition-all">
+                MULAI 🌿
+            </button>
+        </div>
+        <div class="motif-dayak"></div>
+    </div>
+
+
+    <!-- ==================== SCREEN 2: MENU UTAMA ==================== -->
+    <div id="screen-menu" class="screen bg-amber-50">
+        <div class="motif-dayak"></div>
+        
+        <!-- Header -->
+        <div class="bg-amber-100 p-4 flex justify-between items-center shadow-md rounded-b-3xl">
+            <h2 class="text-3xl font-bold text-amber-800 flex items-center gap-3">
+                <span class="text-4xl">🌳</span> Pohon Pengetahuan
+            </h2>
+            <div class="flex gap-4">
+                <button onclick="speakText('Pilih menu yang kamu suka!')" class="bg-blue-400 text-white p-2 md:px-6 rounded-2xl shadow-md text-xl font-bold border-b-4 border-blue-600 active:border-b-0 active:translate-y-1">
+                    🔊 Dengar
+                </button>
+                <button onclick="goToScreen('screen-title')" class="bg-orange-400 text-white text-xl font-bold py-2 px-6 rounded-2xl shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1">
+                    🏠 HOME
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu Buttons -->
+        <div class="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 p-8">
+            
+            <button onclick="goToScreen('screen-belajar'); initBelajar();" class="flex flex-col items-center bg-white p-8 rounded-3xl shadow-xl border-4 border-green-400 hover:scale-105 transition-transform active:scale-95 w-64">
+                <div class="text-8xl mb-4">📖</div>
+                <span class="text-3xl font-bold text-green-600">BELAJAR</span>
+            </button>
+
+            <button onclick="goToScreen('screen-kisah'); speakText('Kisah Kapuas. Ayo kenali tumbuhan daerah kita.');" class="flex flex-col items-center bg-white p-8 rounded-3xl shadow-xl border-4 border-amber-400 hover:scale-105 transition-transform active:scale-95 w-64">
+                <div class="text-8xl mb-4">🛶</div>
+                <span class="text-3xl font-bold text-amber-600">KISAH KAPUAS</span>
+            </button>
+
+            <button onclick="goToScreen('screen-bermain'); initGame();" class="flex flex-col items-center bg-white p-8 rounded-3xl shadow-xl border-4 border-purple-400 hover:scale-105 transition-transform active:scale-95 w-64">
+                <div class="text-8xl mb-4">🌟</div>
+                <span class="text-3xl font-bold text-purple-600">BERMAIN</span>
+            </button>
+
+        </div>
+        
+        <div class="motif-dayak"></div>
+    </div>
+
+
+    <!-- ==================== SCREEN 3: BELAJAR (MATERI INTI) ==================== -->
+    <div id="screen-belajar" class="screen bg-green-50">
+        <!-- Header -->
+        <div class="p-4 flex justify-between items-center bg-green-200 shadow-md">
+            <button onclick="goToScreen('screen-menu')" class="bg-red-400 text-white text-xl font-bold py-2 px-6 rounded-2xl shadow-md border-b-4 border-red-600 active:border-b-0 active:translate-y-1">
+                ⬅️ KEMBALI
+            </button>
+            <h2 class="text-3xl font-bold text-green-800">Bagian Tumbuhan</h2>
+            <button onclick="goToScreen('screen-title')" class="bg-orange-400 text-white text-xl font-bold py-2 px-6 rounded-2xl shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1">
+                🏠 HOME
+            </button>
+        </div>
+
+        <!-- Konten Belajar -->
+        <div class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            
+            <!-- Gambar / Ikon Besar -->
+            <div id="belajar-ikon" class="text-[150px] animate-pop mb-6 drop-shadow-xl bg-white rounded-full h-64 w-64 flex items-center justify-center border-8 border-green-300 overflow-hidden p-2">
+                <!-- Gambar dimuat dinamis dari script -->
+            </div>
+
+            <!-- Teks Suku Kata -->
+            <h1 id="belajar-judul" class="text-6xl font-bold mb-4 tracking-widest text-amber-800 bg-yellow-100 px-8 py-2 rounded-2xl border-4 border-yellow-300">
+                A - KAR
+            </h1>
+
+            <!-- Kalimat Penjelasan -->
+            <p id="belajar-teks" class="text-3xl font-semibold text-gray-700 max-w-2xl leading-relaxed mb-8">
+                Akar ada di dalam tanah. Akar tugasnya meminum air.
+            </p>
+
+            <!-- Tombol Navigasi Bawah -->
+            <div class="flex gap-8 w-full max-w-lg justify-between items-center">
+                <button onclick="prevBelajar()" class="text-5xl bg-gray-300 p-4 rounded-full shadow-lg hover:bg-gray-400 active:scale-90">
+                    ◀️
+                </button>
+                
+                <button onclick="playCurrentBelajarAudio()" class="btn-pulse bg-blue-500 text-white text-2xl font-bold py-4 px-8 rounded-full shadow-xl border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 flex gap-2 items-center">
+                    🔊 DENGARKAN
+                </button>
+
+                <button onclick="nextBelajar()" class="text-5xl bg-green-400 p-4 rounded-full shadow-lg hover:bg-green-500 active:scale-90">
+                    ▶️
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== SCREEN 4: KISAH KAPUAS ==================== -->
+    <div id="screen-kisah" class="screen bg-amber-50">
+        <div class="p-4 flex justify-between items-center bg-amber-200 shadow-md">
+            <button onclick="goToScreen('screen-menu')" class="bg-red-400 text-white text-xl font-bold py-2 px-6 rounded-2xl shadow-md border-b-4 border-red-600 active:border-b-0 active:translate-y-1">
+                ⬅️ KEMBALI
+            </button>
+            <h2 class="text-3xl font-bold text-amber-800">Tumbuhan Sekitar Kita</h2>
+            <button onclick="goToScreen('screen-title')" class="bg-orange-400 text-white text-xl font-bold py-2 px-6 rounded-2xl shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1">
+                🏠 HOME
+            </button>
+        </div>
+
+        <div class="flex-1 flex flex-col md:flex-row items-center justify-center p-4 gap-8">
+            
+            <!-- Kartu 1: Rotan -->
+            <div class="bg-white p-6 rounded-3xl shadow-xl border-4 border-amber-600 max-w-md w-full text-center cursor-pointer hover:scale-105 transition-transform" onclick="speakText('Ini Rotan. Rotan panjang berduri. Bisa dianyam menjadi keranjang purun yang cantik.')">
+                <div class="flex justify-center items-center gap-4 mb-4 h-36">
+                    <div class="w-28 h-28 bg-amber-100 rounded-full flex items-center justify-center border-4 border-amber-400 overflow-hidden p-2">
+                        <img src="./asset/rotan.png" alt="Rotan" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/120x120/d97706/ffffff?text=Rotan';">
+                    </div>
+                    <span class="text-4xl">➡️</span>
+                    <div class="w-28 h-28 bg-amber-100 rounded-full flex items-center justify-center border-4 border-amber-400 overflow-hidden p-2">
+                        <img src="./asset/keranjang.png" alt="Keranjang" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/120x120/b45309/ffffff?text=Keranjang';">
+                    </div>
+                </div>
+                <h3 class="text-4xl font-bold text-amber-800 mb-4 bg-amber-100 rounded-xl py-2">RO - TAN</h3>
+                <p class="text-2xl text-gray-700 font-semibold mb-4">Bisa dianyam menjadi keranjang untuk mama belanja ke pasar.</p>
+                <button class="bg-blue-400 text-white text-lg font-bold py-2 px-6 rounded-full shadow-md w-full">🔊 Sentuh untuk Dengar</button>
+            </div>
+
+            <!-- Kartu 2: Kelakai -->
+            <div class="bg-white p-6 rounded-3xl shadow-xl border-4 border-green-600 max-w-md w-full text-center cursor-pointer hover:scale-105 transition-transform" onclick="speakText('Ini Kelakai. Tumbuh di rawa kapuas. Daunnya enak dimasak.')">
+                <div class="flex justify-center items-center gap-4 mb-4 h-36">
+                    <div class="w-28 h-28 bg-green-100 rounded-full flex items-center justify-center border-4 border-green-400 overflow-hidden p-2">
+                        <img src="./asset/kelakai.png" alt="Kelakai" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/120x120/16a34a/ffffff?text=Kelakai';">
+                    </div>
+                    <span class="text-4xl">➡️</span>
+                    <div class="w-28 h-28 bg-green-100 rounded-full flex items-center justify-center border-4 border-green-400 overflow-hidden p-2">
+                        <img src="./asset/sayur.png" alt="Sayur Kelakai" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/120x120/15803d/ffffff?text=Sayur';">
+                    </div>
+                </div>
+                <h3 class="text-4xl font-bold text-green-800 mb-4 bg-green-100 rounded-xl py-2">KE - LA - KAI</h3>
+                <p class="text-2xl text-gray-700 font-semibold mb-4">Tumbuhan paku di rawa. Daunnya sangat enak dimasak sayur!</p>
+                <button class="bg-blue-400 text-white text-lg font-bold py-2 px-6 rounded-full shadow-md w-full">🔊 Sentuh untuk Dengar</button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ==================== SCREEN 5: BERMAIN (EVALUASI) ==================== -->
+    <div id="screen-bermain" class="screen bg-sky-100">
+        <!-- Header -->
+        <div class="p-4 flex justify-between items-center bg-sky-300 shadow-md">
+            <button onclick="goToScreen('screen-menu')" class="bg-red-400 text-white text-xl font-bold py-2 px-6 rounded-2xl shadow-md border-b-4 border-red-600 active:border-b-0 active:translate-y-1">
+                ⬅️ KEMBALI
+            </button>
+            <h2 class="text-3xl font-bold text-sky-800 flex gap-2 items-center">
+                <span class="text-3xl">⭐</span> Tunjuk Bagiannya!
+            </h2>
+            <div class="flex gap-4">
+                <button onclick="repeatGameAudio()" class="bg-blue-400 text-white text-xl font-bold py-2 px-6 rounded-2xl shadow-md border-b-4 border-blue-600 active:border-b-0 active:translate-y-1">
+                    🔊 Ulangi
+                </button>
+                <button onclick="goToScreen('screen-title')" class="bg-orange-400 text-white text-xl font-bold py-2 px-6 rounded-2xl shadow-md border-b-4 border-orange-600 active:border-b-0 active:translate-y-1">
+                    🏠 HOME
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-start pt-8 pb-4 relative">
+            
+            <!-- Instruksi -->
+            <div class="bg-white px-8 py-4 rounded-3xl shadow-lg border-4 border-yellow-400 text-center mb-8 z-10 max-w-2xl">
+                <p id="game-instruction" class="text-4xl font-bold text-gray-800">
+                    Tunjuk mana yang namanya...
+                </p>
+            </div>
+
+            <!-- Pohon Interaktif -->
+            <div class="tree-container mt-12">
+                <!-- AKAR -->
+                <div onclick="checkGameAnswer('akar')" class="tree-part w-40 h-28 bg-amber-900/10 rounded-2xl bottom-[-50px] left-[65px] flex items-center justify-center z-10 p-2 border-2 border-amber-800/30 overflow-hidden shadow-inner" title="Akar">
+                    <img src="./asset/akar.png" alt="Akar" class="w-full h-full object-contain pointer-events-none" onerror="this.onerror=null; this.src='https://placehold.co/120x80/92400e/ffffff?text=Akar';">
+                </div>
+                
+                <!-- BATANG -->
+                <div onclick="checkGameAnswer('batang')" class="tree-part w-24 h-48 bg-amber-800 bottom-[20px] left-[110px] rounded-lg shadow-inner z-0 border-x-4 border-amber-900" title="Batang">
+                    <span class="text-4xl opacity-50">🪵</span>
+                </div>
+
+                <!-- DAUN -->
+                <div onclick="checkGameAnswer('daun')" class="tree-part w-64 h-64 bg-green-500 rounded-full top-[10px] left-[10px] shadow-xl z-20 border-8 border-green-600 flex flex-wrap items-center justify-center p-4 gap-2" title="Daun">
+                    <span class="text-4xl">🍃</span>
+                    <span class="text-4xl">🍃</span>
+                    <span class="text-4xl">🍃</span>
+                    <span class="text-4xl">🍃</span>
+                </div>
+
+                <!-- BUNGA -->
+                <div onclick="checkGameAnswer('bunga')" class="tree-part w-20 h-20 top-[40px] left-[180px] z-30 text-6xl animate-bounce-slow" title="Bunga">
+                    🌸
+                </div>
+
+                <!-- BUAH -->
+                <div onclick="checkGameAnswer('buah')" class="tree-part w-20 h-20 top-[140px] left-[40px] z-30 text-6xl" title="Buah">
+                    🍎
+                </div>
+            </div>
+
+            <!-- Pesan Sukses -->
+            <div id="game-success" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-3xl shadow-2xl border-8 border-green-400 text-center z-50 flex flex-col items-center">
+                <div class="text-8xl mb-4">🌟🎉</div>
+                <h2 class="text-5xl font-bold text-green-600 mb-6">HEBAT SEKALI!</h2>
+                <button onclick="nextGameLevel()" class="bg-green-500 text-white text-3xl font-bold py-4 px-12 rounded-full shadow-lg border-b-6 border-green-700 active:translate-y-1">
+                    LANJUT ➡️
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        // --- 1. Audio & Text-To-Speech (TTS) Setup ---
+        let synth = window.speechSynthesis;
+        let voiceId = null;
+
+        function initVoices() {
+            let voices = synth.getVoices();
+            for(let i = 0; i < voices.length; i++) {
+                if(voices[i].lang.includes('id') || voices[i].lang.includes('ID')) {
+                    voiceId = voices[i];
+                    break;
+                }
+            }
+        }
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = initVoices;
+        }
+
+        function speakText(text) {
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            if (text !== '') {
+                let utterThis = new SpeechSynthesisUtterance(text);
+                if(voiceId) utterThis.voice = voiceId;
+                utterThis.rate = 0.8; 
+                utterThis.pitch = 1.2;
+                synth.speak(utterThis);
+            }
+        }
+
+        function playSfx(id) {
+            const sfx = document.getElementById(id);
+            if(sfx) {
+                sfx.currentTime = 0;
+                sfx.play().catch(e => console.log("Audio play diizinkan setelah interaksi"));
+            }
+        }
+
+
+        // --- 2. Navigasi Antar Layar ---
+        function goToScreen(screenId) {
+            playSfx('sfx-click');
+            synth.cancel();
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startGame() {
+            speakText("Halo! Ayo kita mulai belajarnya.");
+            goToScreen('screen-menu');
+        }
+
+
+        // --- 3. Logika Layar BELAJAR (Chunking Materi) ---
+        const materiBelajar = [
+            { 
+                judul: "A - KAR", 
+                teks: "Ini adalah A-KAR. Akar ada di dalam tanah. Akar tugasnya meminum air.", 
+                suara: "Ini adalah akar. Akar ada di dalam tanah. Akar tugasnya meminum air.",
+                ikon: "<img src='./asset/akar.png' alt='Akar' class='w-full h-full object-contain' onerror=\"this.onerror=null; this.src='https://placehold.co/200x200/d97706/ffffff?text=Akar';\">", 
+                color: "border-amber-800 text-amber-800", 
+                bg: "bg-amber-100" 
+            },
+            { 
+                judul: "BA - TANG", 
+                teks: "Ini adalah BA-TANG. Batang menopang pohon agar berdiri kuat.", 
+                suara: "Ini adalah batang. Batang menopang pohon agar berdiri kuat.",
+                ikon: "🪵", 
+                color: "border-amber-900 text-amber-900", 
+                bg: "bg-orange-100" 
+            },
+            { 
+                judul: "DA - UN", 
+                teks: "Ini adalah DA-UN. Daun warnanya hijau. Tempat membuat makanan.", 
+                suara: "Ini adalah daun. Daun warnanya hijau. Tempat membuat makanan.",
+                ikon: "🍃", 
+                color: "border-green-600 text-green-700", 
+                bg: "bg-green-100" 
+            },
+            { 
+                judul: "BU - NGA", 
+                teks: "Ini adalah BU-NGA. Bunga cantik dan wangi.", 
+                suara: "Ini adalah bunga. Bunga cantik dan wangi.",
+                ikon: "🌸", 
+                color: "border-pink-500 text-pink-600", 
+                bg: "bg-pink-100" 
+            },
+            { 
+                judul: "BU - AH", 
+                teks: "Ini adalah BU-AH. Buah ada yang bisa dimakan, hmm nyam-nyam!", 
+                suara: "Ini adalah buah. Buah ada yang bisa dimakan, hmm nyam nyam!",
+                ikon: "🍎", 
+                color: "border-red-500 text-red-600", 
+                bg: "bg-red-100" 
+            }
+        ];
+        
+        let indeksBelajar = 0;
+
+        function initBelajar() {
+            indeksBelajar = 0;
+            renderBelajar();
+        }
+
+        function renderBelajar() {
+            const data = materiBelajar[indeksBelajar];
+            
+            const ikonEl = document.getElementById('belajar-ikon');
+            ikonEl.innerHTML = data.ikon;
+            
+            ikonEl.classList.remove('animate-pop');
+            void ikonEl.offsetWidth;
+            ikonEl.classList.add('animate-pop');
+
+            const judulEl = document.getElementById('belajar-judul');
+            judulEl.innerText = data.judul;
+            judulEl.className = `text-6xl font-bold mb-4 tracking-widest px-8 py-2 rounded-2xl border-4 ${data.color} ${data.bg}`;
+
+            document.getElementById('belajar-teks').innerText = data.teks;
+
+            speakText(data.suara);
+        }
+
+        function nextBelajar() {
+            playSfx('sfx-click');
+            if (indeksBelajar < materiBelajar.length - 1) {
+                indeksBelajar++;
+                renderBelajar();
+            } else {
+                speakText("Wah, kamu sudah melihat semuanya! Pintar!");
+            }
+        }
+
+        function prevBelajar() {
+            playSfx('sfx-click');
+            if (indeksBelajar > 0) {
+                indeksBelajar--;
+                renderBelajar();
+            }
+        }
+
+        function playCurrentBelajarAudio() {
+            playSfx('sfx-click');
+            speakText(materiBelajar[indeksBelajar].suara);
+        }
+
+
+        // --- 4. Logika Layar BERMAIN (Game Tunjuk Bagian) ---
+        const gameTarget = [
+            { id: 'daun', tanya: "Tunjuk mana yang namanya DAUN?", benar: "Hebat! Itu Daun yang warnanya hijau." },
+            { id: 'akar', tanya: "Cari di mana letak AKAR?", benar: "Pintar! Akar ada di paling bawah." },
+            { id: 'buah', tanya: "Mana BUAH yang bisa dimakan?", benar: "Nyam nyam! Betul, itu Buah." },
+            { id: 'batang', tanya: "Tunjuk mana yang namanya BATANG?", benar: "Kuat sekali! Itu Batang." },
+            { id: 'bunga', tanya: "Cari BUNGA yang cantik!", benar: "Hore! Itu Bunga." }
+        ];
+
+        let gameIndex = 0;
+
+        function initGame() {
+            gameIndex = 0;
+            document.getElementById('game-success').classList.add('hidden');
+            mulaiPertanyaanGame();
+        }
+
+        function mulaiPertanyaanGame() {
+            const data = gameTarget[gameIndex];
+            document.getElementById('game-instruction').innerText = data.tanya;
+            speakText(data.tanya);
+        }
+
+        function repeatGameAudio() {
+            speakText(gameTarget[gameIndex].tanya);
+        }
+
+        function checkGameAnswer(terpilih) {
+            const data = gameTarget[gameIndex];
+            
+            if (terpilih === data.id) {
+                playSfx('sfx-yay');
+                speakText(data.benar);
+                document.getElementById('game-success').classList.remove('hidden');
+            } else {
+                playSfx('sfx-wrong');
+                speakText("Ayo coba cari lagi ya.");
+                const instr = document.getElementById('game-instruction');
+                instr.style.color = '#ef4444';
+                setTimeout(() => instr.style.color = '#1f2937', 1000);
+            }
+        }
+
+        function nextGameLevel() {
+            playSfx('sfx-click');
+            document.getElementById('game-success').classList.add('hidden');
+            
+            gameIndex++;
+            if (gameIndex < gameTarget.length) {
+                mulaiPertanyaanGame();
+            } else {
+                document.getElementById('game-instruction').innerText = "HORE! KAMU PINTAR SEKALI! 🌟🌟🌟";
+                speakText("Hore! Kamu berhasil menebak semuanya. Pintar sekali!");
+                setTimeout(() => {
+                    goToScreen('screen-menu');
+                }, 5000);
+            }
+        }
+
+    </script>
+</body>
+</html>
